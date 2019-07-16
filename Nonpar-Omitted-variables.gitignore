@@ -1,0 +1,15 @@
+# History files
+.Rhistory
+.Rapp.history
+#In this package, we illustrate the codes for the asymptotic biases comparisons of the parametric, nonparametric and semi-parametric regressions under different degrees of model endogeneity and sample size. I will show you one of the codes in details and the other codes follow #
+
+# load the R package MASS#
+library(MASS)
+# generate a variance-covariance matrix representing the weak endogeneity#
+covariance<-matrix(c(1,0.2,0.21,0.23,0.2,1,0.22,0.21,0.21,0.22,1,0.22,0.23,0.21,0.22,1),nrow=4,byrow=TRUE) 
+#generate 4 variables, n=50  and then define each variable#
+data<-mvrnorm(n=50,mu=c(0,0,0,0),covariance) 
+x1<-data[,1]
+x2<-data[,2]
+x3<-data[,3]
+x4<-data[,4]
