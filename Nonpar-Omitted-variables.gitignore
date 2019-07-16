@@ -1,15 +1,331 @@
-# History files
-.Rhistory
-.Rapp.history
+
 #In this package, we illustrate the codes for the asymptotic biases comparisons of the parametric, nonparametric and semi-parametric regressions under different degrees of model endogeneity and sample size. I will show you one of the codes in details and the other codes follow #
 
 # load the R package MASS#
 library(MASS)
+
 # generate a variance-covariance matrix representing the weak endogeneity#
 covariance<-matrix(c(1,0.2,0.21,0.23,0.2,1,0.22,0.21,0.21,0.22,1,0.22,0.23,0.21,0.22,1),nrow=4,byrow=TRUE) 
+
 #generate 4 variables, n=50  and then define each variable#
 data<-mvrnorm(n=50,mu=c(0,0,0,0),covariance) 
 x1<-data[,1]
 x2<-data[,2]
 x3<-data[,3]
 x4<-data[,4]
+e1<-rnorm(50,0,1) 
+
+#generate a linear data process#
+y=x1+2*x2+3*x3+4*4+e1
+
+#load the ‘’np” package#
+library(np) 
+summary(lm(y~x1+x2+x3+x4))
+summary(npreg(y~x1+x2+x3+x4))
+summary(npplreg(y~x1|x2+x3+x4))
+summary(lm(y~x1+x2+x3))
+summary(npreg(y~x1+x2+x3))
+summary(npplreg(y~x1|x2+x3))
+
+# compute and compare the bias between yhat and y for the linear regression with only variable x4 omitted with the bias between yhat and y for the nonparametric regression with only variable x4 omitted #
+npunitest(y,predict(lm(y~x1+x2+x3)),boot.num=900)
+npunitest(y,predict(npreg(y~x1+x2+x3)),boot.num=900)
+
+summary(lm(y~x1+x2))
+summary(npreg(y~x1+x2))
+summary(npplreg(y~x1|x2)) 
+
+# compute and compare the bias between yhat and y for the linear regression with only variable x4,x3 omitted with the bias between yhat and y for the nonparametric regression with only variable x4,x3 omitted #
+npunitest(y,predict(lm(y~x1+x2)),boot.num=900)
+npunitest(y,predict(npreg(y~x1+x2)),boot.num=900)
+
+summary(lm(y~x1))
+summary(npreg(y~x1))
+ 
+# compute and compare the bias between yhat and y for the linear regression with only variable x4, x3 and x2 omitted with the bias between yhat and y for the nonparametric regression with only variable x4, x3 and x2 omitted #
+npunitest(y,predict(lm(y~x1)),boot.num=900)
+npunitest(y,predict(npreg(y~x1)),boot.num=900)
+
+
+
+
+
+#generate a nonlinear data process by the same data generated above#
+y=sin(x1)+x2^2+3*x3+x4+e1
+summary(lm(y~x1+x2+x3))
+summary(npreg(y~x1+x2+x3))
+summary(npplreg(y~x1|x2+x3))
+
+# compute and compare the bias between yhat and y for the nonlinear regression with only variable x4 omitted with the bias between yhat and y for the nonparametric regression with only variable x4 omitted #
+npunitest(y,predict(lm(y~x1+x2+x3)),boot.num=90)
+npunitest(y,predict(npreg(y~x1+x2+x3)),boot.num=90)
+
+summary(lm(y~x1+x2))
+summary(npreg(y~x1+x2)) 
+summary(npplreg(y~x1|x2)) 
+
+# compute and compare the bias between yhat and y for the nonlinear regression with only variable x4,x3 omitted with the bias between yhat and y for the nonparametric regression with only variable x4,x3 omitted #
+npunitest(y,predict(lm(y~x1+x2)),boot.num=90)
+npunitest(y,predict(npreg(y~x1+x2)),boot.num=90)
+
+summary(lm(y~x1))
+summary(npreg(y~x1))
+
+# compute and compare the bias between yhat and y for the nonlinear regression with only variable x4, x3 and x2 omitted with the bias between yhat and y for the nonparametric regression with only variable x4, x3 and x2 omitted #
+npunitest(y,predict(lm(y~x1)),boot.num=90)
+npunitest(y,predict(npreg(y~x1)),boot.num=90)
+
+
+
+
+
+
+
+# In the next package, I illustrate the codes for the small sample biases comparisons of the IV estimates of the linear regression and the partial linear regression under different sample size. I will show you one of the codes' details and the other codes follow #
+library(MASS)
+covariance<-matrix(c(1,0.01,0.01,1),nrow=2,byrow=TRUE) 
+data<-mvrnorm(n=100,mu=c(0,0),covariance)
+ez<-data[,1]
+ex<-data[,2]
+u<-rnorm(100,0,1)
+pz=u+ez
+px=-2*u+ex         
+w1<-rnorm(100,0,1)    
+w2<-rnorm(100,0,1)
+w3<-rnorm(100,0,1)
+z=w1+2*w2+w3+pz    
+x=-2*w1+w2-w3+px    
+y=x*1+0.25*z^2+u      
+
+library(AER)            
+summary(lm(y~x+z^2-1))  
+summary(ivreg(y~x+z^2-1|w1+w2))  #summarize the IV regression, using w1,w2 as IVs#
+
+
+
+#In the following package, I illustrate the comparison of the asymptotic biases of the Nadaraya-Watson’s estimator, the Gasser-Müller’s estimator and the local linear estimator#
+
+x <- seq(-1, 1, length = 50)  # generate 50 real numbers range from -1 to 1 #
+z1<-runif(50)         #generate a random variable from a uniform distribution#
+z<-sort(z1)              # sort z1 from the smallest to the biggest #
+q1<-rnorm(50)     # generate a random variable from a normal distribution#
+q<-sort(q1)        # sort q1 from the smallest to the biggest#
+y <- cos(x^4)+z^4+q^3  #generate a nonlinear data process#
+h <- 0.055            # define the bandwidth#
+fx.hat <- function(z, h) {
+    dnorm((z - x)/h)/h             #define the kernel of Nadaraya-Watson estimator#
+}                
+NWSMOOTH <- function(h, y, x) {
+    n <- length(y)
+    s.hat <- rep(0, n)
+    for (i in 1:n) {                      #define the Nadaraya-Watson’s estimator#
+        a <- fx.hat(x[i], h)
+        s.hat[i] <- sum(y * a/sum(a))
+    }
+    return(s.hat)
+}
+
+NWsmooth.val <- NWSMOOTH(h, y, x)       #output the estimator#
+
+LPRSMOOTH <- function(y, x, h) {
+    n <- length(y)
+    s.hat <- rep(0, n)
+    for (i in 1:n) {
+        weight <- dnorm((x - x[i])/h)                    #define the local linear estimator#
+        mod <- lm(y ~ x, weights = weight)
+        s.hat[i] <- as.numeric(predict(mod, data.frame(x = x[i])))
+    }
+    return(s.hat)
+}
+
+lprsmooth.val <- LPRSMOOTH(y, x, h)          #output the estimator#
+
+GMSMOOTH <- function(y, x, h) {
+    n <- length(y)
+    s <- c(-Inf, 0.5 * (x[-n] + x[-1]), Inf) 
+    s.hat <- rep(0, n)                        #define the Gasser-Müller’s estimator #
+    for (i in 1:n) {
+        fx.hat <- function(z, h, x) {
+            dnorm((x - z)/h)/h
+        }
+        a <- y[i] * integrate(fx.hat, s[i], s[i + 1], h = h, x = x[i])$value
+        s.hat[i] <- sum(a)
+    }
+    return(s.hat)
+}
+
+GMsmooth.val <- GMSMOOTH(y, x, h)               #output the estimator#
+ 
+plot(x, y, xlab = "Predictor", ylab = "Response",mgp=c(1.5,0.8,0), col = 1) #define the plot figure#
+lines(x, NWsmooth.val, lty = 2, col = 2)      #plot the yhat of the Nadaraya-Watson’s estimator#
+lines(x, lprsmooth.val, lty = 3, col = 3)	       #plot the yhat of the local linear estimator#
+lines(x, GMsmooth.val, lty = 4, col = 4)      #plot the yhat of the Gasser-Müller’s estimator #
+letters <- c("NW method", "LP method","GM method")
+legend("bottomright", legend = letters, lty = 2:4, col = 2:4, cex = 0.5)  #figure 1#
+
+ls.val<-predict(lm(y~x-1))   #compute the fits of the OLS#
+library(np)              #load the R package “np”#
+npunitest(y,lprsmooth.val,boot.num=20)      #compute the bias of the local linear estimator #
+npunitest(y,NWsmooth.val,boot.num=20) #compute the bias of the Nadaraya-Watson’s estimator #
+npunitest(y,GMsmooth.val,boot.num=20)  #compute the bias of the Gasser-Müller’s estimator #
+npunitest(y,ls.val,boot.num=20)        #compute the bias of the OLS#
+
+#the next are the same codes for sample size 100, 150 respectively#
+x <- seq(-1, 1, length = 100)
+z1<-runif(100)
+z<-sort(z1)
+q1<-rnorm(100)
+q<-sort(q1)
+y <- cos(x^4)+z^4+q^3
+h <- 0.055
+
+ls.val<-predict(lm(y~x-1))
+library(np)
+npunitest(y,lprsmooth.val,boot.num=20)
+npunitest(y,NWsmooth.val,boot.num=20)
+npunitest(y,GMsmooth.val,boot.num=20)
+npunitest(y,ls.val,boot.num=20)
+
+---------------------------------------------------------------------------
+x <- seq(-1, 1, length = 150)
+z1<-runif(150)
+z<-sort(z1)
+q1<-rnorm(150)
+q<-sort(q1)
+y <- cos(x^4)+z^4+q^3
+h <- 0.055
+
+ls.val<-predict(lm(y~x-1))
+library(np)
+npunitest(y,lprsmooth.val,boot.num=20)
+npunitest(y,NWsmooth.val,boot.num=20)
+npunitest(y,GMsmooth.val,boot.num=20)
+npunitest(y,ls.val,boot.num=20)
+
+
+
+#In the following package, I illustrate the codes of simulating the performances of the OLS, Nadaraya-Watson’s estimator, and the Robinson’s estimator for the partial linear model where there are location shifts in the included endogenous regressors and several explanatory variables are omitted#
+
+library(MASS)
+covariance<-matrix(c(1,0.01,0.12,0.01,1,0.15,0.12,0.15,1),nrow=3,byrow=TRUE)
+data<-mvrnorm(n=50,mu=c(0,0,0),covariance)
+Up1<-data[,1]
+eq1<-data[,2]
+ea1<-data[,3]
+p1=6+Up1
+z1=6+eq1
+a1=6+ea1
+q1=20-1*p1+1*z1+1*a1+rnorm(50)
+covariance<-matrix(c(1,0.01,0.12,0.01,1,0.15,0.12,0.15,1),nrow=3,byrow=TRUE)
+data<-mvrnorm(n=50,mu=c(0,0,0),covariance)
+Up2<-data[,1]
+eq2<-data[,2]
+ea2<-data[,3]
+p2=10+Up2
+z2=10+eq2
+a2=10+ea2
+q2=20-1*p2+1*z2+1*a2+rnorm(50)
+
+covariance<-matrix(c(1,0.01,0.12,0.01,1,0.15,0.12,0.15,1),nrow=3,byrow=TRUE)
+data<-mvrnorm(n=50,mu=c(0,0,0),covariance)
+Up3<-data[,1]
+eq3<-data[,2]
+ea3<-data[,3]
+p3=14+Up3
+z3=14+eq3
+a3=14+ea3
+q3=20-1*p3+1*z3+1*a3+rnorm(50)
+
+covariance<-matrix(c(1,0.01,0.12,0.01,1,0.15,0.12,0.15,1),nrow=3,byrow=TRUE)
+data<-mvrnorm(n=50,mu=c(0,0,0),covariance)
+Up4<-data[,1]
+eq4<-data[,2]
+ea4<-data[,3]
+p4=18+Up4
+z4=18+eq4
+a4=18+ea4
+q4=20-1*p4+1*z4+1*a4+rnorm(50)
+
+covariance<-matrix(c(1,0.01,0.12,0.01,1,0.15,0.12,0.15,1),nrow=3,byrow=TRUE)
+data<-mvrnorm(n=50,mu=c(0,0,0),covariance)
+Up5<-data[,1]
+eq5<-data[,2]
+ea5<-data[,3]
+p5=22+Up5
+z5=22+eq5
+a5=22+ea5
+q5=20-1*p5+1*z5+1*a5+rnorm(50)
+
+y<-c(q1,q2,q3,q4,q5)
+x<-c(p1,p2,p3,p4,p5)
+z<-c(z1,z2,z3,z4,z5)
+a<-c(a1,a2,a3,a4,a5)
+
+h <- 0.055
+fx.hat <- function(z, h) {
+    dnorm((z - x)/h)/h
+}
+NWSMOOTH <- function(h, y, x) {
+    n <- length(y)
+    s.hat <- rep(0, n)
+    for (i in 1:n) {
+        a <- fx.hat(x[i], h)
+        s.hat[i] <- sum(y * a/sum(a))
+    }
+    return(s.hat)
+}
+
+NWsmooth.val <- NWSMOOTH(h, y, x)
+
+LPRSMOOTH <- function(y, x, h) {
+    n <- length(y)
+    s.hat <- rep(0, n)
+    for (i in 1:n) {
+        weight <- dnorm((x - x[i])/h)
+        mod <- lm(y ~ x, weights = weight)
+        s.hat[i] <- as.numeric(predict(mod, data.frame(x = x[i])))
+    }
+    return(s.hat)
+}
+
+lprsmooth.val <- LPRSMOOTH(y, x, h)
+
+GMSMOOTH <- function(y, x, h) {
+    n <- length(y)
+    s <- c(-Inf, 0.5 * (x[-n] + x[-1]), Inf)
+    s.hat <- rep(0, n)
+    for (i in 1:n) {
+        fx.hat <- function(z, h, x) {
+            dnorm((x - z)/h)/h
+        }
+        a <- y[i] * integrate(fx.hat, s[i], s[i + 1], h = h, x = x[i])$value
+        s.hat[i] <- sum(a)
+    }
+    return(s.hat)
+}
+
+GMsmooth.val <- GMSMOOTH(y, x, h)
+
+ls.val<-predict(lm(y~x-1))
+
+#plot and compare the biases#
+plot(x,y,xaxt="n",yaxt="n",col="black",ylim=c(10,50),xlim=c(1,25))
+abline(lm(y~x),col="red")
+par(new="TRUE",col="black")
+plot(x,NWsmooth.val,col="blue",ylim=c(10,50),xlim=c(1,25),ylab="")
+par(new="TRUE",col="black")
+plot(x,GMsmooth.val,col="yellow",ylim=c(10,50),xlim=c(1,25),ylab="")
+par(new="TRUE",col="black")
+plot(x,lprsmooth.val,col="green",ylim=c(10,50),xlim=c(1,25),ylab="")
+par(new="TRUE",col="black")
+plot(x,ls.val,col="pink",ylim=c(10,50),xlim=c(1,25),ylab="")
+
+
+#compare the biases #
+library(np)
+npunitest(y,NWsmooth.val,boot.num=20)
+npunitest(y,GMsmooth.val,boot.num=20)
+npunitest(y,ls.val,boot.num=20)
+npunitest(y,lprsmooth.val,boot.num=20)
+
+
